@@ -1,0 +1,51 @@
+Create a modern, minimalist HTML file summarizing our discussion about: {{TOPIC}}
+
+Requirements:
+- Modern, clean design with professional styling
+- Fully self-contained (no external CSS/JS dependencies)
+- Responsive layout (mobile and desktop)
+- Color scheme:
+  - Primary background: #ffffff
+  - Secondary background: #f8f9fa
+  - Text primary: #2c3e50
+  - Text secondary: #5a6c7d
+  - Accent colors: relevant to the topic
+  - Code background: #f5f5f5
+
+Design Elements:
+- Header with gradient background and clear title
+- Subtitle in pure white (#ffffff) for readability
+- Comparison cards with hover effects
+- Tables with highlighted important rows
+- Color-coded pros/cons lists with ✓ and ✗ icons
+- Code snippets with proper formatting and border-left accent
+- Highlight boxes for important information (yellow background)
+- Recommendation boxes (green background)
+- Architecture diagrams in monospace font
+- Clean footer with timestamp
+
+Structure:
+1. Header section with title and subtitle
+2. Overview section explaining the topic
+3. Key differences and comparisons
+4. Detailed analysis with subsections
+5. Pros and cons in card format
+6. When to use each approach
+7. Practical examples and code snippets
+8. Recommendations section
+9. Bottom line summary
+10. Footer with date
+
+Technical Requirements:
+- Use semantic HTML5 elements
+- CSS Grid for layouts
+- Flexbox for component alignment
+- Box-shadow for depth
+- Smooth transitions and hover effects
+- Print-friendly styles
+- Accessible color contrast ratios
+- Clean typography hierarchy
+
+Save the file to: {{OUTPUT_PATH}}
+
+Generate comprehensive content based on our entire conversation about this topic, including all details, code examples, trade-offs, and recommendations discussed.

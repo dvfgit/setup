@@ -1,0 +1,560 @@
+<title>{{TICKET}} lane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#f4f6f8; --surface:#ffffff; --ink:#1b2230; --muted:#5a6475; --line:#dde2ea;
+  --accent:#0f6674; --accent-soft:#e3f1f3;
+  --crit:#b42318; --crit-soft:#fdecea; --warn:#a15c07; --warn-soft:#fdf3e2; --ok:#17703f; --ok-soft:#e6f4ec;
+  --code:#eef1f5; --idle:#8a93a3; --idle-soft:#eef0f3;
+  --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#12161d; --surface:#1a2029; --ink:#e4e8ef; --muted:#9aa4b4; --line:#2c3441;
+    --accent:#5cc3cf; --accent-soft:#16333a;
+    --crit:#ff8a7d; --crit-soft:#3a1b19; --warn:#f0b35c; --warn-soft:#3a2a12; --ok:#6fd49b; --ok-soft:#15301f;
+    --code:#222a35; --idle:#7d8698; --idle-soft:#232a35;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#12161d; --surface:#1a2029; --ink:#e4e8ef; --muted:#9aa4b4; --line:#2c3441;
+  --accent:#5cc3cf; --accent-soft:#16333a;
+  --crit:#ff8a7d; --crit-soft:#3a1b19; --warn:#f0b35c; --warn-soft:#3a2a12; --ok:#6fd49b; --ok-soft:#15301f;
+  --code:#222a35; --idle:#7d8698; --idle-soft:#232a35;
+}
+body{background:var(--ground);color:var(--ink);font:15px/1.6 var(--sans);padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:960px;margin:0 auto;display:grid;gap:24px}
+h1{font-size:28px;line-height:1.2;margin:0;text-wrap:balance;font-weight:700}
+h2{font-size:18px;margin:0 0 12px;text-wrap:balance}
+h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 10px;max-width:70ch}
+a{color:var(--accent)}
+code,.mono{font-family:var(--mono);font-size:13px}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sub{color:var(--muted);margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.chip b{font-weight:500;opacity:.8}
+.c-crit{background:var(--crit-soft);color:var(--crit)}
+.c-warn{background:var(--warn-soft);color:var(--warn)}
+.c-ok{background:var(--ok-soft);color:var(--ok)}
+.c-acc{background:var(--accent-soft);color:var(--accent)}
+.c-idle{background:var(--idle-soft);color:var(--idle)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 22px;min-width:0}
+ol,ul{margin:0 0 10px;padding-left:22px}
+li{margin-bottom:6px;max-width:74ch}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 18px;margin:0}
+dt{color:var(--muted);font-size:13px;padding-top:1px}
+dd{margin:0;min-width:0;overflow-wrap:anywhere}
+dd ul{margin:0}
+.empty{color:var(--muted);font-size:14px;margin:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+#log-more{margin-top:8px}
+#log-more summary{font-size:13px;color:var(--muted)}
+
+/* status strip */
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px 22px}
+.status .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.status .v{font-weight:600;overflow-wrap:anywhere}
+.now{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;align-items:baseline;padding:12px 14px;margin-bottom:16px;border-radius:8px;background:var(--accent-soft)}
+.now .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.now .v{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+/* stage stepper: the lane's position at a glance */
+.steps{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.steps li{margin:0;max-width:none;min-width:0}
+.steps .bar{height:8px;border-radius:999px;background:var(--idle-soft)}
+.steps .lbl{display:flex;justify-content:space-between;gap:4px;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.steps .cnt{font-weight:500;font-variant-numeric:tabular-nums}
+.steps li[data-s="done"] .bar{background:var(--ok)}
+.steps li[data-s="done"] .lbl{color:var(--ok)}
+.steps li[data-s="current"] .bar{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.steps li[data-s="current"] .lbl{color:var(--accent)}
+.steps li[data-s="blocked"] .bar{background:var(--crit);box-shadow:0 0 0 3px var(--crit-soft)}
+.steps li[data-s="blocked"] .lbl{color:var(--crit)}
+@media (max-width:560px){ .steps .lbl{flex-direction:column;gap:0;font-size:11.5px} }
+.note-live{font-size:13px;color:var(--muted);margin-top:8px}
+
+/* rows shared by checklist, gates, reviews, parked */
+.group{margin-top:14px}
+.group:first-child{margin-top:0}
+.group h3{margin:0 0 6px;display:flex;gap:8px;align-items:baseline}
+.group h3 .count{font-weight:500;color:var(--muted);font-size:13px}
+.row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.dot{width:14px;height:14px;border-radius:50%;margin-top:4px;border:2px solid var(--idle)}
+.row[data-s="doing"] .dot{border-color:var(--accent);background:var(--accent-soft)}
+.row[data-s="done"] .dot,.row[data-s="pass"] .dot{border-color:var(--ok);background:var(--ok)}
+.row[data-s="blocked"] .dot,.row[data-s="fail"] .dot{border-color:var(--crit);background:var(--crit-soft)}
+.row[data-s="skip"] .dot{border-style:dashed}
+.row .t{font-weight:500}
+.row[data-s="done"] .t{color:var(--muted)}
+.row .n{font-size:13px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.row .n code{font-size:12px}
+
+/* reviews: one column per pass */
+.reviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px 24px;align-items:start}
+.review{min-width:0}
+.review .head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
+.review .name{font-weight:600}
+.review ul{list-style:none;padding:0;margin:8px 0 0}
+.review li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;max-width:none;margin:0;padding:4px 0}
+.review li .n{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+
+/* evidence */
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:start}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure img{border:1px solid var(--line);border-radius:6px;display:block;max-width:100%;background:var(--ground)}
+figcaption{font-size:13px;color:var(--muted)}
+figcaption b{color:var(--ink);font-weight:600;display:block}
+
+/* log */
+.log{list-style:none;padding:0;margin:0}
+.log li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:6px 0;border-bottom:1px solid var(--line);max-width:none;margin:0}
+.log li:last-child{border-bottom:0}
+.log time{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;padding-top:2px}
+
+pre{background:var(--code);border-radius:8px;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--mono);margin:0;white-space:pre}
+details summary{cursor:pointer;font-weight:600}
+details[open] summary{margin-bottom:10px}
+summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media (max-width:760px){ .two{grid-template-columns:1fr} }
+@media (max-width:560px){ h1{font-size:23px} section{padding:16px} dl{grid-template-columns:1fr} dt{margin-top:6px} .row{grid-template-columns:22px minmax(0,1fr)} .row > .chip{grid-column:2;justify-self:start} }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Lane tracker</div>
+  <h1>{{TICKET}} — {{TITLE}}</h1>
+  <p class="sub"><a href="{{TICKET_URL}}">{{TICKET}}</a></p>
+  <div class="chips">
+    <span class="chip c-idle" id="chip-phase"><b>Lane</b> not started</span>
+    <span class="chip c-idle" id="chip-gates" hidden></span>
+    <span class="chip c-idle" id="chip-review" hidden></span>
+  </div>
+</header>
+
+<section id="progress" aria-live="polite">
+  <h2>Lane status</h2>
+  <div class="now" id="now"><div class="k">Now</div><div class="v" id="st-now">Waiting for the lane to start.</div><div class="k" id="st-next-k" hidden>Next</div><div class="v" id="st-next" hidden></div></div>
+  <div class="status">
+    <div><div class="k">Phase</div><div class="v" id="st-phase">—</div></div>
+    <div><div class="k">Branch</div><div class="v mono" id="st-branch">—</div></div>
+    <div><div class="k">Worktree · port</div><div class="v mono" id="st-where">—</div></div>
+    <div><div class="k">Pull request</div><div class="v" id="st-pr">—</div></div>
+    <div><div class="k">Last update</div><div class="v" id="st-updated">—</div></div>
+  </div>
+  <p id="st-summary" style="margin-top:12px" hidden></p>
+  <p id="st-teardown" class="sub" hidden></p>
+  <ol class="steps" id="steps" aria-label="Lane stages"></ol>
+  <div class="note-live" id="live-note">Connecting to live progress…</div>
+</section>
+
+<section id="brief">
+  <h2>Brief</h2>
+  <div id="brief-body"><p class="empty">The brief appears here once the lane writes <code>lane/brief</code>.</p></div>
+</section>
+
+<div class="two">
+  <section>
+    <h2>Checklist</h2>
+    <div id="tasks"></div>
+  </section>
+  <section>
+    <h2>Gates</h2>
+    <div id="gates"><p class="empty">No gate has run yet.</p></div>
+  </section>
+</div>
+
+<section>
+  <h2>Reviews</h2>
+  <div id="reviews" class="reviews"><p class="empty">No review pass yet.</p></div>
+</section>
+
+<section>
+  <h2>Evidence</h2>
+  <div id="evidence" class="evidence"><p class="empty">No recordings yet.</p></div>
+</section>
+
+<section>
+  <h2>Parked</h2>
+  <div id="parked"><p class="empty">Nothing parked.</p></div>
+</section>
+
+<section>
+  <h2>Activity</h2>
+  <ul class="log" id="log"><li class="empty" style="display:block">No activity yet.</li></ul>
+  <details id="log-more" hidden><summary id="log-more-label">Show earlier</summary><ul class="log" id="log-rest"></ul></details>
+</section>
+
+<section id="agents">
+  <details>
+    <summary>For agents: keeping this page current</summary>
+<pre>Write with the ArtifactData tool on this artifact's URL. The page updates live; never republish for progress.
+Every doc is optional — a missing doc renders its empty state. Timestamps are real UTC ISO-8601.
+
+lane/status   { phase: "setup|build|verify|review|pr|done|blocked",   // the stage IN PROGRESS
+                now,    // one sentence: what the lane is doing or where it stopped
+                next,   // one sentence: the next step, or who it is waiting on
+                branch, worktree, port, prUrl, summary, updatedAt, teardown: { done: bool, note } }
+lane/brief    { goal, acceptance: [..], boundary: [..], verify: [..], links: [{ label, url }] }
+tasks/&lt;id&gt;     { status: "todo|doing|done|blocked", note, updatedAt }
+                Default ids are built into the page (t10…t50). Write only the ones that change.
+                { hidden: true } drops a default that doesn't apply. A new id needs group, title, order.
+lane/gates    { items: [{ name, command, result: "pass|fail|skip|running", detail, at }] }
+lane/reviews  { items: [{ name, verdict, at, findings: [{ summary, where,
+                disposition: "fixed|rejected|parked|blocking|open" }] }] }
+lane/evidence { items: [{ label, url, provenance }] }
+                Images must be uploaded to THIS artifact (Artifact publish with asset: true) —
+                the page's CSP blocks images from github.com and every other host.
+lane/parked   { items: [{ summary, where, why }] }
+log/main      { items: [{ at, text }] }   newest first, keep ≤ 40. Stage boundaries and
+                stop conditions only — commits, gates and review results already have their own sections.</pre>
+  </details>
+</section>
+
+</div>
+
+<script>
+(function(){
+  // The default checklist lives in the page, so a lane never has to seed it.
+  // The db only carries per-task overrides (status, note) under tasks/<id>.
+  var DEFAULT_TASKS = [
+    {id:'t10', group:'Setup',  order:10, title:'Worktree'},
+    {id:'t11', group:'Setup',  order:11, title:'Bootstrap'},
+    {id:'t12', group:'Setup',  order:12, title:'Before evidence'},
+    {id:'t20', group:'Build',  order:20, title:'Red tests'},
+    {id:'t21', group:'Build',  order:21, title:'Implement'},
+    {id:'t22', group:'Build',  order:22, title:'Integration / mount'},
+    {id:'t23', group:'Build',  order:23, title:'E2E'},
+    {id:'t30', group:'Verify', order:30, title:'Gates'},
+    {id:'t31', group:'Verify', order:31, title:'Browser verify + After GIF'},
+    {id:'t32', group:'Review', order:32, title:'Review passes'},
+    {id:'t33', group:'Review', order:33, title:'Blind review'},
+    {id:'t40', group:'PR',     order:40, title:'PR + CI'},
+    {id:'t41', group:'PR',     order:41, title:'Ticket comment'},
+    {id:'t50', group:'Done',   order:50, title:'Teardown'}
+  ];
+  // Checklist groups are the same six stages as the stepper, in the same order.
+  var ORDER = ['Setup','Build','Verify','Review','PR','Done'];
+  var TASK_LABEL = {todo:'To do', doing:'In progress', done:'Done', blocked:'Blocked'};
+  var TASK_CHIP = {todo:'c-idle', doing:'c-acc', done:'c-ok', blocked:'c-crit'};
+  var GATE_LABEL = {pass:'Pass', fail:'Fail', skip:'Skipped', running:'Running'};
+  var GATE_CHIP = {pass:'c-ok', fail:'c-crit', skip:'c-idle', running:'c-acc'};
+  var DISP_CHIP = {fixed:'c-ok', rejected:'c-idle', parked:'c-warn', blocking:'c-crit', open:'c-acc'};
+  var PHASE_CHIP = {setup:'c-acc', build:'c-acc', verify:'c-acc', review:'c-acc', pr:'c-acc', done:'c-ok', blocked:'c-crit'};
+
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
+  function chip(cls, text){ return el('span', 'chip ' + cls, text); }
+  function list(v){ return Array.isArray(v) ? v : []; }
+  function str(v){ return typeof v === 'string' ? v : (v == null ? '' : String(v)); }
+  function fmt(iso){
+    if (!iso) return '—';
+    var d = new Date(iso); if (isNaN(d)) return str(iso);
+    return d.toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  }
+  // db content is shared and untrusted: only https links and this artifact's own asset paths render as links.
+  function safeUrl(u){ u = str(u); return (/^https:\/\//.test(u) || /^\/[^\/]/.test(u)) ? u : ''; }
+  function link(url, text){ var u = safeUrl(url); if (!u) return el('span', null, text || url); var a = el('a', null, text || url); a.href = u; if (/^https:/.test(u)) { a.target = '_blank'; a.rel = 'noopener'; } return a; }
+  function emptyInto(root, text){ root.textContent = ''; root.appendChild(el('p', 'empty', text)); }
+
+  // ---- status ----
+  function renderStatus(s){
+    s = s || {};
+    var phase = str(s.phase) || 'not started';
+    document.getElementById('st-phase').textContent = phase;
+    document.getElementById('st-branch').textContent = str(s.branch) || '—';
+    var where = [str(s.worktree), s.port ? ':' + s.port : ''].filter(Boolean).join(' · ');
+    document.getElementById('st-where').textContent = where || '—';
+    var pr = document.getElementById('st-pr'); pr.textContent = '';
+    if (safeUrl(s.prUrl)) pr.appendChild(link(s.prUrl, str(s.prUrl).replace(/^https:\/\/github\.com\//, '')));
+    else pr.textContent = '—';
+    document.getElementById('st-updated').textContent = fmt(s.updatedAt);
+    document.getElementById('st-now').textContent = str(s.now) || (s.phase ? 'Phase: ' + phase : 'Waiting for the lane to start.');
+    var nk = document.getElementById('st-next-k'), nv = document.getElementById('st-next');
+    if (s.next){ nv.textContent = str(s.next); nv.hidden = false; nk.hidden = false; } else { nv.hidden = true; nk.hidden = true; }
+    var sum = document.getElementById('st-summary');
+    if (s.summary){ sum.textContent = str(s.summary); sum.hidden = false; } else sum.hidden = true;
+    var td = document.getElementById('st-teardown'), t = s.teardown;
+    if (t && typeof t === 'object'){
+      td.textContent = (t.done ? 'Teardown done' : 'Teardown pending') + (t.note ? ' — ' + str(t.note) : '');
+      td.hidden = false;
+    } else td.hidden = true;
+    lanePhase = str(s.phase);
+    renderSteps();
+    var c = document.getElementById('chip-phase');
+    c.className = 'chip ' + (PHASE_CHIP[s.phase] || 'c-idle');
+    c.textContent = ''; c.appendChild(el('b', null, 'Lane')); c.appendChild(document.createTextNode(' ' + phase));
+  }
+
+  // ---- brief ----
+  function renderBrief(b){
+    var root = document.getElementById('brief-body');
+    if (!b){ emptyInto(root, 'The brief appears here once the lane writes lane/brief.'); return; }
+    root.textContent = '';
+    var dl = el('dl');
+    function add(label, value){
+      var items = Array.isArray(value) ? value.map(str).filter(Boolean) : (str(value) ? [str(value)] : []);
+      if (!items.length) return;
+      dl.appendChild(el('dt', null, label));
+      var dd = el('dd');
+      if (items.length === 1 && !Array.isArray(value)) dd.textContent = items[0];
+      else { var ul = el('ul'); items.forEach(function(i){ ul.appendChild(el('li', null, i)); }); dd.appendChild(ul); }
+      dl.appendChild(dd);
+    }
+    add('Goal', b.goal);
+    add('Acceptance', b.acceptance);
+    add('Owns', b.boundary);
+    add('Verify with', b.verify);
+    var links = list(b.links).filter(function(l){ return l && safeUrl(l.url); });
+    if (links.length){
+      dl.appendChild(el('dt', null, 'Links'));
+      var dd = el('dd'); var ul = el('ul');
+      links.forEach(function(l){ var li = el('li'); li.appendChild(link(l.url, str(l.label) || str(l.url))); ul.appendChild(li); });
+      dd.appendChild(ul); dl.appendChild(dd);
+    }
+    if (!dl.children.length){ emptyInto(root, 'The brief is empty.'); return; }
+    root.appendChild(dl);
+  }
+
+  // ---- checklist: defaults merged with db overrides ----
+  var overrides = {};
+  function renderTasks(){
+    var byId = {};
+    DEFAULT_TASKS.forEach(function(t){ byId[t.id] = Object.assign({}, t); });
+    Object.keys(overrides).forEach(function(id){
+      var o = overrides[id] || {};
+      if (byId[id]) Object.assign(byId[id], o);
+      else if (o.title) byId[id] = Object.assign({id:id, group:'Other', order:999}, o);
+    });
+    var docs = Object.keys(byId).map(function(k){ return byId[k]; }).filter(function(t){ return !t.hidden; });
+    var root = document.getElementById('tasks'); root.textContent = '';
+    var groups = {};
+    docs.forEach(function(d){ var g = str(d.group) || 'Other'; (groups[g] = groups[g] || []).push(d); });
+    var names = Object.keys(groups).sort(function(a,b){
+      var ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    var done = 0;
+    names.forEach(function(g){
+      var items = groups[g].sort(function(a,b){ return (Number(a.order)||0) - (Number(b.order)||0); });
+      var gd = items.filter(function(t){ return t.status === 'done'; }).length;
+      done += gd;
+      var wrap = el('div', 'group');
+      var h = el('h3', null, g); h.appendChild(el('span', 'count', gd + '/' + items.length)); wrap.appendChild(h);
+      items.forEach(function(t){
+        var s = TASK_LABEL[t.status] ? t.status : 'todo';
+        var row = el('div', 'row'); row.dataset.s = s;
+        row.appendChild(el('span', 'dot'));
+        var body = el('div'); body.appendChild(el('div', 't', str(t.title) || t.id));
+        if (t.note) body.appendChild(el('div', 'n', t.note));
+        row.appendChild(body); row.appendChild(chip(TASK_CHIP[s], TASK_LABEL[s]));
+        wrap.appendChild(row);
+      });
+      root.appendChild(wrap);
+    });
+    visibleTasks = docs;
+    renderSteps();
+  }
+
+  // ---- stage stepper ----
+  // Each stage owns the checklist ids that finish it; lane/status.phase says where the lane is.
+  var STAGES = [
+    {key:'setup',  label:'Setup',  ids:['t10','t11','t12']},
+    {key:'build',  label:'Build',  ids:['t20','t21','t22','t23']},
+    {key:'verify', label:'Verify', ids:['t30','t31']},
+    {key:'review', label:'Review', ids:['t32','t33']},
+    {key:'pr',     label:'PR',     ids:['t40','t41']},
+    {key:'done',   label:'Done',   ids:['t50']}
+  ];
+  var visibleTasks = [], lanePhase = '';
+  function renderSteps(){
+    var byId = {};
+    visibleTasks.forEach(function(t){ byId[t.id] = t; });
+    function tally(stage){
+      var ts = stage.ids.map(function(id){ return byId[id]; }).filter(Boolean);
+      return {done: ts.filter(function(t){ return t.status === 'done'; }).length, total: ts.length};
+    }
+    var current = STAGES.map(function(s){ return s.key; }).indexOf(lanePhase);
+    var blocked = lanePhase === 'blocked';
+    if (blocked){
+      // A blocked lane sits at the first stage that still has unfinished work.
+      current = STAGES.findIndex(function(s){ var c = tally(s); return c.done < c.total; });
+      if (current < 0) current = STAGES.length - 1;
+    }
+    var ol = document.getElementById('steps'); ol.textContent = '';
+    STAGES.forEach(function(s, i){
+      var c = tally(s);
+      var state = lanePhase === 'done' ? 'done'
+        : current < 0 ? 'upcoming'
+        : i < current ? 'done'
+        : i === current ? (blocked ? 'blocked' : 'current')
+        : 'upcoming';
+      var li = el('li'); li.dataset.s = state;
+      if (state === 'current' || state === 'blocked') li.setAttribute('aria-current', 'step');
+      li.appendChild(el('div', 'bar'));
+      var lbl = el('div', 'lbl'); lbl.appendChild(el('span', null, s.label));
+      if (c.total) lbl.appendChild(el('span', 'cnt', c.done + '/' + c.total));
+      li.appendChild(lbl);
+      li.title = s.label + ': ' + ({done:'done', current:'in progress', blocked:'blocked', upcoming:'not started'})[state];
+      ol.appendChild(li);
+    });
+  }
+
+  // ---- gates ----
+  function renderGates(d){
+    var root = document.getElementById('gates');
+    var items = list(d && d.items);
+    var c = document.getElementById('chip-gates');
+    if (!items.length){ emptyInto(root, 'No gate has run yet.'); c.hidden = true; return; }
+    root.textContent = '';
+    var fails = 0, passes = 0;
+    items.forEach(function(g){
+      var s = GATE_LABEL[g.result] ? g.result : 'running';
+      if (s === 'fail') fails++; if (s === 'pass') passes++;
+      var row = el('div', 'row'); row.dataset.s = s;
+      row.appendChild(el('span', 'dot'));
+      var body = el('div'); body.appendChild(el('div', 't', str(g.name) || 'Gate'));
+      var meta = [];
+      if (g.detail) meta.push(str(g.detail));
+      if (g.at) meta.push(fmt(g.at));
+      if (g.command){ var n = el('div', 'n'); n.appendChild(el('code', null, g.command)); body.appendChild(n); }
+      if (meta.length) body.appendChild(el('div', 'n', meta.join(' · ')));
+      row.appendChild(body); row.appendChild(chip(GATE_CHIP[s], GATE_LABEL[s]));
+      root.appendChild(row);
+    });
+    c.hidden = false;
+    c.className = 'chip ' + (fails ? 'c-crit' : 'c-ok');
+    c.textContent = ''; c.appendChild(el('b', null, 'Gates'));
+    c.appendChild(document.createTextNode(' ' + (fails ? fails + ' failing' : passes + '/' + items.length + ' pass')));
+  }
+
+  // ---- reviews ----
+  function verdictChip(v){
+    var t = str(v).toUpperCase();
+    return chip(/PASS|CLEAN/.test(t) ? 'c-ok' : /DISCUSS|BLOCK|FAIL/.test(t) ? 'c-crit' : 'c-acc', str(v) || 'Running');
+  }
+  function renderReviews(d){
+    var root = document.getElementById('reviews');
+    var items = list(d && d.items);
+    var c = document.getElementById('chip-review');
+    if (!items.length){ emptyInto(root, 'No review pass yet.'); c.hidden = true; return; }
+    root.textContent = '';
+    items.forEach(function(r){
+      var box = el('div', 'review');
+      var head = el('div', 'head');
+      var left = el('div'); left.appendChild(el('span', 'name', str(r.name) || 'Review'));
+      if (r.at) left.appendChild(el('span', 'n', '  ' + fmt(r.at)));
+      head.appendChild(left); head.appendChild(verdictChip(r.verdict));
+      box.appendChild(head);
+      var fs = list(r.findings);
+      if (fs.length){
+        var ul = el('ul');
+        fs.forEach(function(f){
+          var dsp = DISP_CHIP[f.disposition] ? f.disposition : 'open';
+          var li = el('li'); li.appendChild(chip(DISP_CHIP[dsp], dsp));
+          var body = el('div'); body.appendChild(el('div', null, str(f.summary)));
+          if (f.where){ var n = el('div', 'n'); n.appendChild(el('code', null, f.where)); body.appendChild(n); }
+          li.appendChild(body); ul.appendChild(li);
+        });
+        box.appendChild(ul);
+      }
+      root.appendChild(box);
+    });
+    var last = items[items.length - 1];
+    c.hidden = false;
+    var v = verdictChip(last.verdict); c.className = v.className;
+    c.textContent = ''; c.appendChild(el('b', null, str(last.name) || 'Review')); c.appendChild(document.createTextNode(' ' + (str(last.verdict) || 'running')));
+  }
+
+  // ---- evidence ----
+  function renderEvidence(d){
+    var root = document.getElementById('evidence');
+    var items = list(d && d.items).filter(function(e){ return e && safeUrl(e.url); });
+    if (!items.length){ emptyInto(root, 'No recordings yet.'); return; }
+    root.textContent = '';
+    items.forEach(function(e){
+      var fig = el('figure');
+      var u = safeUrl(e.url);
+      var looksImage = /\.(gif|png|jpe?g|webp)(\?|$)/i.test(u) || /^\/_blob\//.test(u) || /^\//.test(u);
+      if (looksImage){
+        var img = el('img'); img.src = u; img.alt = str(e.label) || 'Lane evidence'; img.loading = 'lazy';
+        fig.appendChild(img);
+      } else fig.appendChild(link(u, str(e.label) || u));
+      var cap = el('figcaption');
+      cap.appendChild(el('b', null, str(e.label) || 'Evidence'));
+      if (e.provenance) cap.appendChild(document.createTextNode(str(e.provenance)));
+      fig.appendChild(cap);
+      root.appendChild(fig);
+    });
+  }
+
+  // ---- parked ----
+  function renderParked(d){
+    var root = document.getElementById('parked');
+    var items = list(d && d.items);
+    if (!items.length){ emptyInto(root, 'Nothing parked.'); return; }
+    root.textContent = '';
+    items.forEach(function(p){
+      var row = el('div', 'row'); row.dataset.s = 'todo';
+      row.appendChild(el('span', 'dot'));
+      var body = el('div'); body.appendChild(el('div', 't', str(p.summary)));
+      if (p.why) body.appendChild(el('div', 'n', p.why));
+      if (p.where){ var n = el('div', 'n'); n.appendChild(el('code', null, p.where)); body.appendChild(n); }
+      row.appendChild(body); row.appendChild(chip('c-warn', 'Parked'));
+      root.appendChild(row);
+    });
+  }
+
+  // ---- log ----
+  // Activity is secondary to the status panel: show the latest few, fold the rest.
+  var LOG_VISIBLE = 3;
+  function logItem(it){
+    var li = el('li'); var t = el('time', null, fmt(it.at)); if (it.at) t.dateTime = str(it.at);
+    li.appendChild(t); li.appendChild(el('span', null, it.text)); return li;
+  }
+  function renderLog(d){
+    var ul = document.getElementById('log'); ul.textContent = '';
+    var rest = document.getElementById('log-rest'); rest.textContent = '';
+    var more = document.getElementById('log-more');
+    var items = list(d && d.items).slice(0, 40);
+    if (!items.length){ var li = el('li', 'empty', 'No activity yet.'); li.style.display = 'block'; ul.appendChild(li); more.hidden = true; return; }
+    items.slice(0, LOG_VISIBLE).forEach(function(it){ ul.appendChild(logItem(it)); });
+    var older = items.slice(LOG_VISIBLE);
+    older.forEach(function(it){ rest.appendChild(logItem(it)); });
+    more.hidden = !older.length;
+    document.getElementById('log-more-label').textContent = 'Show ' + older.length + ' earlier';
+  }
+
+  // The page is complete at rest: the default checklist renders before any data arrives.
+  renderTasks();
+
+  var note = document.getElementById('live-note');
+  if (!window.claude || typeof window.claude.use !== 'function'){ note.textContent = 'Live progress is available when this page is opened on claude.ai.'; return; }
+  window.claude.use('db').then(function(db){
+    if (!db){ note.textContent = 'Live progress isn’t available in this view.'; return; }
+    note.textContent = 'Live — updates as the lane works.';
+    function fail(){ note.textContent = 'Live progress disconnected. Reload to reconnect.'; }
+    function data(s){ return s && s.exists ? s.data() : null; }
+    db.doc('lane/status').onSnapshot(function(s){ renderStatus(data(s)); }, fail);
+    db.doc('lane/brief').onSnapshot(function(s){ renderBrief(data(s)); }, fail);
+    db.doc('lane/gates').onSnapshot(function(s){ renderGates(data(s)); }, fail);
+    db.doc('lane/reviews').onSnapshot(function(s){ renderReviews(data(s)); }, fail);
+    db.doc('lane/evidence').onSnapshot(function(s){ renderEvidence(data(s)); }, fail);
+    db.doc('lane/parked').onSnapshot(function(s){ renderParked(data(s)); }, fail);
+    db.doc('log/main').onSnapshot(function(s){ renderLog(data(s)); }, fail);
+    db.collection('tasks').onSnapshot(function(q){
+      overrides = {};
+      q.docs.forEach(function(d){ overrides[d.id] = d.data() || {}; });
+      renderTasks();
+    }, fail);
+  }, function(){ note.textContent = 'Live progress isn’t available in this view.'; });
+})();
+</script>

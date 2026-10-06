@@ -1,0 +1,30 @@
+{
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "skipAutoPermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "agentPushNotifEnabled": true,
+  "statusLine": {
+    "command": "~/.claude/statusline.sh",
+    "padding": 2,
+    "type": "command"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ls *)",
+      "Bash(ls)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(stat *)",
+      "Bash(echo *)",
+      "Bash(echo)",
+      "Grep",
+      "Read",
+      "Glob"
+    ]
+  }
+}

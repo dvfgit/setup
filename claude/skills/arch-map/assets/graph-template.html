@@ -1,0 +1,638 @@
+<title>REPLACE Architecture Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+/* ============================================================
+   PALETTE — swap these for the subject. Keep the token names.
+   ============================================================ */
+:root{
+  --ground:#F2F4F7; --surface:#FFFFFF; --surface-2:#E7ECF1;
+  --ink:#141A21; --muted:#5B6874;
+  --rule:#CBD5DF; --rule-soft:#E0E6EC;
+  --k1:#AF3A1E;  /* edge kind 1 */
+  --k2:#13607A;  /* edge kind 2 */
+  --k3:#5B6874;  /* edge kind 3 */
+  --k4:#7E5800;  /* edge kind 4 */
+  --shadow:0 1px 2px rgba(20,26,33,.06), 0 8px 24px -16px rgba(20,26,33,.22);
+  --display:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --body:'Source Serif 4',Georgia,serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1217; --surface:#151C23; --surface-2:#1D262E;
+    --ink:#E2E9EF; --muted:#8C9BA8;
+    --rule:#2B363F; --rule-soft:#222C34;
+    --k1:#F08055; --k2:#63BBD8; --k3:#8C9BA8; --k4:#D8A64A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1217; --surface:#151C23; --surface-2:#1D262E;
+  --ink:#E2E9EF; --muted:#8C9BA8;
+  --rule:#2B363F; --rule-soft:#222C34;
+  --k1:#F08055; --k2:#63BBD8; --k3:#8C9BA8; --k4:#D8A64A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);
+  font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto}
+
+header.top{border-bottom:1px solid var(--rule);padding-block:48px 28px}
+.kicker{font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 16px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,5.4vw,46px);
+  line-height:1.06;letter-spacing:-.02em;margin:0 0 16px;text-wrap:balance}
+.standfirst{font-size:18px;color:var(--muted);margin:0;max-width:62ch}
+.measure{max-width:68ch}
+p{margin:0 0 15px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);
+  padding:1px 5px;border-radius:3px}
+strong{font-weight:600}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  margin-top:28px;padding-bottom:14px;border-bottom:1px solid var(--rule-soft)}
+.chip{font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);background:none;
+  border:1px solid var(--rule);border-radius:99px;padding:5px 12px 5px 9px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="false"]{opacity:.4}
+.chip i{width:18px;height:0;border-top-width:2.5px;display:inline-block;flex:none}
+
+/* the whole graph area breaks out of the text column; diagram and panel share it */
+.graph-grid{
+  width:100vw;margin-left:calc(50% - 50vw);
+  padding-inline:clamp(14px,2.5vw,32px);
+  margin-top:20px;
+  display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start;
+}
+@media (max-width:1000px){.graph-grid{grid-template-columns:1fr}}
+.graph-stage{background:var(--surface);border:1px solid var(--rule);border-radius:6px;
+  padding:16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;box-shadow:var(--shadow)}
+#depgraph{display:block;width:100%;height:auto;color:var(--ink)}
+.scrollhint{display:none}
+@media (max-width:1000px){
+  .scrollhint{display:block;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    margin:8px 0 0;text-align:center;grid-column:1}
+}
+.graph-panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;
+  padding:18px 18px 14px;box-shadow:var(--shadow);position:sticky;top:16px}
+@media (max-width:1000px){.graph-panel{position:static}}
+
+.mk1{fill:var(--k1)}.mk2{fill:var(--k2)}.mk3{fill:var(--k3)}.mk4{fill:var(--k4)}
+.edge{fill:none;stroke-width:1.5;opacity:.1}
+.edge.lit{opacity:.95;stroke-width:2.2}
+.edge.solo{opacity:1;stroke-width:3}
+.edge.off{display:none}
+@media (prefers-reduced-motion:no-preference){
+  .edge{transition:opacity .16s ease,stroke-width .16s ease}
+  .node rect,.node text{transition:opacity .16s ease,fill .16s ease,stroke .16s ease}
+}
+.node{cursor:pointer}
+.node rect{fill:var(--surface);stroke:var(--rule);stroke-width:1.4}
+.node .n-label{font-family:var(--display);font-size:12.5px;font-weight:600;fill:var(--ink)}
+.node .n-sub{font-family:var(--mono);font-size:9.5px;fill:var(--muted)}
+.node.ext rect{fill:var(--surface-2);stroke-dasharray:5 3}
+.node.dim{opacity:.26}
+.node.near rect{stroke:var(--ink);stroke-width:1.6}
+.node.sel rect{fill:var(--surface-2);stroke:var(--k2);stroke-width:2.4}
+.node.sel .n-label{fill:var(--k2)}
+.node:focus-visible rect{stroke:var(--k2);stroke-width:2.6}
+
+.p-kind{font-family:var(--display);font-size:9.5px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.p-name{font-family:var(--mono);font-size:14px;font-weight:600;margin:0 0 3px;
+  word-break:break-word;line-height:1.35}
+.p-path{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:12px;
+  word-break:break-all}
+.p-body{font-size:14.5px;line-height:1.55;margin:0}
+.p-body code{font-size:12px}
+.p-rel-h{font-family:var(--display);font-size:9.5px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin:18px 0 7px;padding-top:13px;
+  border-top:1px solid var(--rule-soft)}
+button.rel{display:block;width:100%;text-align:left;background:none;border:0;
+  border-radius:4px;padding:6px 8px;margin:0 0 1px -8px;font-family:var(--mono);
+  font-size:11.5px;line-height:1.45;color:var(--ink);cursor:pointer}
+button.rel:hover,button.rel:focus-visible{background:var(--surface-2)}
+button.rel .arr{display:inline-block;width:14px;font-weight:600}
+button.rel .verb{display:block;color:var(--muted);font-size:10.5px;padding-left:14px}
+.p-none{font-size:13px;color:var(--muted);font-style:italic;padding:2px 0}
+.note{margin-top:22px;font-size:15px;color:var(--muted);max-width:70ch}
+/* ---------- phone (Pixel 9a is ~412px wide) ---------- */
+@media (max-width:480px){
+  body{font-size:16px;padding-inline:14px}
+  h1{font-size:clamp(26px,8vw,34px)}
+  .standfirst{font-size:16px}
+  .controls{gap:6px}
+  .chip{font-size:10px;padding:4px 9px 4px 7px}
+  .chip i{width:14px}
+  .graph-stage{padding:12px 8px}
+  .graph-panel{padding:16px 16px 12px}
+  .p-body{font-size:15px}
+  button.rel{font-size:12px}
+  section{padding-block:34px}
+  ol.stages li{padding:13px 14px 13px 42px}
+  ol.stages li::before{left:13px}
+  ol.stages span,ol.findings span{font-size:14.5px}
+  ol.findings li{padding-left:30px}
+  .callout{padding:15px 16px}
+  .codeblock pre{padding:13px 14px}
+  .codeblock code{font-size:11.5px}
+}
+:focus-visible{outline:2px solid var(--k2);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="kicker">REPLACE — repo or subsystem</p>
+    <h1>REPLACE Architecture Map</h1>
+    <p class="standfirst">REPLACE — one sentence on what this subsystem does and where its boundaries are.</p>
+  </header>
+
+  <div class="measure" style="padding-top:30px">
+    <p>REPLACE — two or three sentences of orientation. What question does this graph answer?</p>
+    <p><strong>Select a node</strong> to isolate its edges. The panel lists what it depends on and what depends on it; hovering a row lights just that one relationship.</p>
+  </div>
+
+  <div class="controls" id="controls"></div>
+
+  <div class="graph-grid">
+    <div class="graph-stage">
+      <svg id="depgraph" role="group" aria-label="Architecture dependency graph. Select a node to see its relationships.">
+        <defs>
+          <marker id="mk1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="mk1" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="mk2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="mk2" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="mk3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="mk3" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="mk4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="mk4" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <g id="g-edges"></g>
+        <g id="g-nodes"></g>
+      </svg>
+    </div>
+    <p class="scrollhint">← drag the diagram sideways →</p>
+    <aside class="graph-panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <p class="note">REPLACE — the one structural thing the graph makes obvious that prose would not.</p>
+</div>
+
+<script>
+/* ==================================================================
+   DATA — this is the only part you edit per codebase.
+   ==================================================================
+
+   KINDS: up to 4 edge kinds. `sw` picks the colour token (1-4) and
+   `dash` the stroke style. Rename to fit the domain.
+
+   NODES: `row` is the layer, top to bottom. Order in the array sets
+   left-to-right order within a row. Width is automatic; set `w` to
+   override. `kind:"ext"` draws a dashed box for anything outside the
+   codebase.
+
+   EDGES: `v` MUST name the real call site — a function, symbol, or
+   route. If you cannot name it, it is not an edge.
+   Optional `d` overrides auto-routing with a manual SVG path.
+   Optional `bidi:1` puts an arrowhead on both ends.
+   ================================================================== */
+
+var KINDS = {
+  control: { sw:1, dash:"6 4",  label:"control — starts work" },
+  data:    { sw:2, dash:"",     label:"data — reads / writes" },
+  host:    { sw:3, dash:"",     label:"build & host" },
+  type:    { sw:4, dash:"2 4",  label:"types & schemas" }
+};
+
+var NODES = [
+  { id:"ext",   label:"External System", sub:"vendor API", kind:"ext", row:0,
+    role:"External boundary",
+    body:"REPLACE. Two or three sentences. <code>code refs</code> are fine." },
+  { id:"entry", label:"api-service", sub:"apps/api", row:0,
+    role:"Entry point",
+    body:"REPLACE." },
+  { id:"lib",   label:"vendor-client", sub:"packages/vendor-client", row:1,
+    role:"Anti-corruption layer",
+    body:"REPLACE." },
+  { id:"store", label:"database", sub:"packages/data-access", row:2,
+    role:"System of record",
+    body:"REPLACE." }
+];
+
+var EDGES = [
+  { f:"ext",   t:"entry", k:"control", v:"POST /webhook" },
+  { f:"entry", t:"lib",   k:"data",    v:"fetchThing()" },
+  { f:"lib",   t:"ext",   k:"data",    v:"REST v3", bidi:1 },
+  { f:"entry", t:"store", k:"data",    v:"prisma.$transaction" }
+];
+
+var DEFAULT_SELECTED = null;   /* null = first node with the most edges */
+
+/*--ROUTER-START--*/
+/* ==================================================================
+   LAYOUT + ORTHOGONAL ROUTER — generic, do not edit per codebase.
+   Pure functions over (NODES, EDGES); returns geometry.
+   ================================================================== */
+function buildLayout(NODES, EDGES, opt) {
+  /* two passes: the first measures how many side-corridor lanes are needed,
+     the second widens the margins so no corridor runs off-canvas. */
+  var first = layoutCore(NODES, EDGES, opt || {});
+  var need = 34 + Math.max(first.corridors.left, first.corridors.right) * 13;
+  if (need <= (opt && opt.padX ? opt.padX : 76)) return first;
+  var o = {}; for (var k in (opt || {})) o[k] = opt[k];
+  o.padX = need;
+  return layoutCore(NODES, EDGES, o);
+}
+
+function layoutCore(NODES, EDGES, opt) {
+  opt = opt || {};
+  var NODE_H  = opt.nodeH  || 64;
+  var ROW_GAP = opt.rowGap || 116;
+  var COL_GAP = opt.colGap || 42;
+  var PAD_X   = opt.padX   || 76;   /* room for side corridors */
+  var PAD_Y   = opt.padY   || 30;
+  var MIN_W   = opt.minW   || 150;
+  var MAX_W   = opt.maxW   || 300;
+
+  var byId = {};
+  NODES.forEach(function (n) { byId[n.id] = n; });
+
+  /* --- width from label --- */
+  NODES.forEach(function (n) {
+    if (!n.w) {
+      var longest = Math.max(
+        Math.min(n.label.length, 26) * 7.4,
+        (n.sub || "").length * 5.9
+      );
+      n.w = Math.max(MIN_W, Math.min(MAX_W, Math.round(longest + 30)));
+    }
+    n.h = n.h || NODE_H;
+  });
+
+  /* --- group by row, lay out left to right, centre each row --- */
+  var rows = {};
+  NODES.forEach(function (n) { (rows[n.row] = rows[n.row] || []).push(n); });
+  var rowKeys = Object.keys(rows).map(Number).sort(function (a, b) { return a - b; });
+
+  var widest = 0;
+  rowKeys.forEach(function (r) {
+    var w = rows[r].reduce(function (s, n) { return s + n.w; }, 0)
+          + COL_GAP * (rows[r].length - 1);
+    if (w > widest) widest = w;
+  });
+
+  var canvasW = widest + PAD_X * 2;
+  rowKeys.forEach(function (r) {
+    var list = rows[r];
+    var w = list.reduce(function (s, n) { return s + n.w; }, 0)
+          + COL_GAP * (list.length - 1);
+    var x = (canvasW - w) / 2;
+    list.forEach(function (n, i) {
+      n.x = Math.round(x);
+      n.y = PAD_Y + rowKeys.indexOf(r) * (NODE_H + ROW_GAP);
+      n.col = i;
+      x += n.w + COL_GAP;
+    });
+  });
+  var canvasH = PAD_Y * 2 + rowKeys.length * NODE_H + (rowKeys.length - 1) * ROW_GAP;
+
+  /* --- anchor spreading: count edges per node per side --- */
+  var sideUse = {};
+  function sideKey(id, s) { return id + "|" + s; }
+  function bump(id, s) {
+    var k = sideKey(id, s);
+    sideUse[k] = (sideUse[k] || 0) + 1;
+    return sideUse[k] - 1;
+  }
+  function sideTotal(id, s) { return sideUse[sideKey(id, s)] || 0; }
+
+  /* is there a node sitting between a and b in the same row? */
+  function clearBetween(a, b) {
+    var lo = Math.min(a.col, b.col), hi = Math.max(a.col, b.col);
+    return hi - lo === 1;
+  }
+
+  /* pick the cheaper side corridor: total horizontal detour on each side */
+  function cheaperSide(a, b) {
+    var acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
+    var left = (acx - PAD_X) + (bcx - PAD_X);
+    var right = (canvasW - PAD_X - acx) + (canvasW - PAD_X - bcx);
+    return left <= right ? "left" : "right";
+  }
+
+  function sidesFor(a, b) {
+    if (a.row === b.row) {
+      if (clearBetween(a, b)) {
+        return a.x < b.x ? ["right", "left"] : ["left", "right"];
+      }
+      return ["top", "top"];
+    }
+    if (Math.abs(a.row - b.row) === 1) {
+      return a.row < b.row ? ["bottom", "top"] : ["top", "bottom"];
+    }
+    var s = cheaperSide(a, b);
+    return [s, s];
+  }
+
+  var plans = EDGES.map(function (e) {
+    var a = byId[e.f], b = byId[e.t];
+    if (!a || !b) throw new Error("edge references unknown node: " + e.f + " -> " + e.t);
+    var s = sidesFor(a, b);
+    var straight = a.row === b.row && clearBetween(a, b);
+    return { e: e, a: a, b: b, sa: s[0], sb: s[1], straight: straight };
+  });
+  plans.forEach(function (p) { p.ia = bump(p.a.id, p.sa); p.ib = bump(p.b.id, p.sb); });
+
+  function anchor(n, side, idx, total) {
+    var t = (idx + 1) / (total + 1);
+    if (side === "top")    return { x: n.x + n.w * t, y: n.y,          dir: "up" };
+    if (side === "bottom") return { x: n.x + n.w * t, y: n.y + n.h,    dir: "down" };
+    if (side === "left")   return { x: n.x,           y: n.y + n.h * t, dir: "left" };
+    return                        { x: n.x + n.w,     y: n.y + n.h * t, dir: "right" };
+  }
+
+  /* --- lanes: one per inter-row gap, one per side corridor --- */
+  var gapLanes = {}, corridorLanes = { left: 0, right: 0 };
+  function gapLane(gapIdx, span) {
+    var g = gapLanes[gapIdx] = gapLanes[gapIdx] || [];
+    g.push(span);
+    return g.length - 1;
+  }
+  function gapY(gapIdx, laneIdx, count) {
+    var rowIdx = gapIdx;
+    var top = PAD_Y + rowIdx * (NODE_H + ROW_GAP) + NODE_H;
+    var usable = ROW_GAP - 24;
+    var step = count > 1 ? Math.min(14, usable / (count + 1)) : 0;
+    return Math.round(top + 12 + laneIdx * step);
+  }
+
+  /* order long spans to the outer lanes for fewer crossings */
+  plans.forEach(function (p) {
+    p.span = Math.abs((p.a.x + p.a.w / 2) - (p.b.x + p.b.w / 2));
+  });
+  var sorted = plans.slice().sort(function (x, y) { return y.span - x.span; });
+
+  sorted.forEach(function (p) {
+    var a = p.a, b = p.b;
+    if (p.straight) {
+      p.lane = 0;
+    } else if (a.row === b.row) {
+      p.lane = gapLane("r" + a.row, p.span);
+    } else if (Math.abs(a.row - b.row) === 1) {
+      p.gap = Math.min(a.row, b.row);
+      p.lane = gapLane(p.gap, p.span);
+    } else {
+      p.side = p.sa;
+      p.lane = corridorLanes[p.side]++;
+    }
+  });
+
+  var gapCount = {};
+  Object.keys(gapLanes).forEach(function (k) { gapCount[k] = gapLanes[k].length; });
+
+  /* --- emit paths --- */
+  plans.forEach(function (p) {
+    if (p.e.d) { p.d = p.e.d; return; }
+    var a = p.a, b = p.b;
+    var A = anchor(a, p.sa, p.ia, sideTotal(a.id, p.sa));
+    var B = anchor(b, p.sb, p.ib, sideTotal(b.id, p.sb));
+    var GAP = 9;  /* stop short so the arrowhead sits off the border */
+
+    if (p.straight) {
+      /* neighbours in the same row: one straight line between facing edges */
+      var y0 = Math.round((a.y + b.y) / 2 + a.h / 2);
+      var xEnd = p.sb === "left" ? B.x - GAP : B.x + GAP;
+      p.d = "M " + r(A.x) + " " + r(y0) + " H " + r(xEnd);
+      return;
+    }
+
+    if (a.row === b.row) {
+      /* same row, not neighbours: hop through the nearest inter-row gap */
+      var key = "r" + a.row;
+      var gi = a.row === 0 ? 0 : a.row - 1;
+      var y = gapY(gi, p.lane, gapCount[key]);
+      var backIn = a.row === 0 ? B.y - GAP : B.y + GAP;
+      p.d = "M " + r(A.x) + " " + r(A.y + (a.row === 0 ? a.h : 0)) + " V " + r(y) +
+            " H " + r(B.x) + " V " + r(a.row === 0 ? B.y + b.h + GAP : backIn);
+      return;
+    }
+
+    if (Math.abs(a.row - b.row) === 1) {
+      var yy = gapY(p.gap, p.lane, gapCount[p.gap]);
+      var endY = B.dir === "up" ? B.y - GAP : B.y + GAP;
+      p.d = "M " + r(A.x) + " " + r(A.y) + " V " + r(yy) +
+            " H " + r(B.x) + " V " + r(endY);
+      return;
+    }
+
+    /* multi-row: out the side, down a corridor, back in */
+    var cx = p.side === "left"
+      ? Math.round(PAD_X - 20 - p.lane * 13)
+      : Math.round(canvasW - PAD_X + 20 + p.lane * 13);
+    var endX = p.side === "left" ? B.x - GAP : B.x + GAP;
+    p.d = "M " + r(A.x) + " " + r(A.y) + " H " + r(cx) +
+          " V " + r(B.y) + " H " + r(endX);
+  });
+
+  function r(v) { return Math.round(v * 10) / 10; }
+
+  return {
+    width: canvasW,
+    height: canvasH,
+    nodes: NODES,
+    corridors: corridorLanes,
+    paths: plans.map(function (p) { return { edge: p.e, d: p.d }; })
+  };
+}
+/*--ROUTER-END--*/
+
+/* ==================================================================
+   RENDER + INTERACTION — generic, do not edit per codebase.
+   ================================================================== */
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById("depgraph");
+  var gE = document.getElementById("g-edges");
+  var gN = document.getElementById("g-nodes");
+  var panel = document.getElementById("panel");
+  var controls = document.getElementById("controls");
+  if (!svg || !gE || !gN || !panel) return;
+
+  var byId = {};
+  NODES.forEach(function (n) { byId[n.id] = n; });
+
+  var L;
+  try {
+    L = buildLayout(NODES, EDGES, {});
+  } catch (err) {
+    panel.innerHTML = '<p class="p-body">Graph failed to build: ' + err.message + "</p>";
+    return;
+  }
+
+  svg.setAttribute("viewBox", "0 0 " + L.width + " " + L.height);
+  svg.style.minWidth = Math.min(L.width, 1150) + "px";
+
+  function el(name, attrs) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  /* edges */
+  var edgeEls = L.paths.map(function (p, i) {
+    var k = KINDS[p.edge.k] || KINDS[Object.keys(KINDS)[0]];
+    var path = el("path", {
+      d: p.d, class: "edge k-" + p.edge.k,
+      stroke: "var(--k" + k.sw + ")",
+      "marker-end": "url(#mk" + k.sw + ")"
+    });
+    if (k.dash) path.setAttribute("stroke-dasharray", k.dash);
+    if (p.edge.bidi) path.setAttribute("marker-start", "url(#mk" + k.sw + ")");
+    gE.appendChild(path);
+    return path;
+  });
+
+  /* nodes */
+  function wrap(text, max) {
+    if (text.length <= max) return [text];
+    var cut = text.lastIndexOf("-", max);
+    if (cut < max * 0.45) cut = text.lastIndexOf(" ", max);
+    if (cut < max * 0.45) cut = max;
+    var head = text.slice(0, cut + 1).trim();
+    return [head, text.slice(cut + 1).trim()];
+  }
+
+  var nodeEls = {};
+  L.nodes.forEach(function (n) {
+    var g = el("g", { class: "node " + (n.kind || ""), tabindex: "0", role: "button" });
+    g.setAttribute("aria-label", n.label + ". " + (n.role || "") + ". Select for relationships.");
+    g.appendChild(el("rect", { x: n.x, y: n.y, width: n.w, height: n.h, rx: 5 }));
+    var lines = wrap(n.label, 26);
+    var baseY = n.y + (lines.length > 1 ? 24 : 27);
+    lines.forEach(function (ln, i) {
+      var t = el("text", { x: n.x + 14, y: baseY + i * 15, class: "n-label" });
+      t.textContent = ln;
+      g.appendChild(t);
+    });
+    if (n.sub) {
+      var s = el("text", { x: n.x + 14, y: n.y + n.h - 13, class: "n-sub" });
+      s.textContent = n.sub;
+      g.appendChild(s);
+    }
+    g.addEventListener("click", function () { select(n.id); });
+    g.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(n.id); }
+    });
+    gN.appendChild(g);
+    nodeEls[n.id] = g;
+  });
+
+  /* kind filter chips */
+  var hidden = {};
+  Object.keys(KINDS).forEach(function (k) {
+    var def = KINDS[k];
+    var b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.setAttribute("aria-pressed", "true");
+    b.innerHTML = '<i style="border-top-style:' + (def.dash ? "dashed" : "solid") +
+      ";border-top-color:var(--k" + def.sw + ')"></i>' + def.label;
+    b.addEventListener("click", function () {
+      hidden[k] = !hidden[k];
+      b.setAttribute("aria-pressed", hidden[k] ? "false" : "true");
+      edgeEls.forEach(function (p, i) {
+        p.classList.toggle("off", !!hidden[EDGES[i].k]);
+      });
+    });
+    controls.appendChild(b);
+  });
+
+  function soloEdge(i) {
+    edgeEls.forEach(function (p, j) { p.classList.toggle("solo", j === i); });
+  }
+  function clearSolo() { edgeEls.forEach(function (p) { p.classList.remove("solo"); }); }
+
+  function relRow(e, i, dir) {
+    var other = byId[dir === "out" ? e.t : e.f];
+    var b = document.createElement("button");
+    b.className = "rel"; b.type = "button";
+    b.innerHTML = '<span class="arr" style="color:var(--k' + (KINDS[e.k] || {sw:3}).sw + ')">' +
+      (dir === "out" ? "&rarr;" : "&larr;") + "</span>" + other.label +
+      '<span class="verb">' + e.v + "</span>";
+    b.addEventListener("click", function () { select(other.id); });
+    b.addEventListener("mouseenter", function () { soloEdge(i); });
+    b.addEventListener("mouseleave", clearSolo);
+    b.addEventListener("focus", function () { soloEdge(i); });
+    b.addEventListener("blur", clearSolo);
+    return b;
+  }
+
+  function select(id) {
+    var n = byId[id];
+    if (!n) return;
+    if (history.replaceState) history.replaceState(null, "", "#" + id);
+
+    var touching = [], near = {};
+    EDGES.forEach(function (e, i) {
+      if (e.f === id || e.t === id) {
+        touching.push(i);
+        near[e.f === id ? e.t : e.f] = 1;
+      }
+    });
+    edgeEls.forEach(function (p, i) {
+      p.classList.toggle("lit", touching.indexOf(i) !== -1);
+      p.classList.remove("solo");
+    });
+    L.nodes.forEach(function (m) {
+      var g = nodeEls[m.id];
+      g.classList.toggle("sel", m.id === id);
+      g.classList.toggle("near", m.id !== id && !!near[m.id]);
+      g.classList.toggle("dim", m.id !== id && !near[m.id]);
+      g.setAttribute("aria-pressed", m.id === id ? "true" : "false");
+    });
+
+    panel.innerHTML = "";
+    function add(cls, tag, html) {
+      var e = document.createElement(tag);
+      e.className = cls; e.innerHTML = html; panel.appendChild(e); return e;
+    }
+    add("p-kind", "div", n.role || "");
+    add("p-name", "h3", n.label);
+    if (n.sub) add("p-path", "div", n.sub);
+    add("p-body", "p", n.body || "");
+
+    var outs = [], ins = [];
+    EDGES.forEach(function (e, i) {
+      if (e.f === id) outs.push(relRow(e, i, "out"));
+      else if (e.t === id) ins.push(relRow(e, i, "in"));
+    });
+    function group(title, rows) {
+      add("p-rel-h", "div", title);
+      if (!rows.length) add("p-none", "div", "nothing");
+      else rows.forEach(function (r) { panel.appendChild(r); });
+    }
+    group("Depends on", outs);
+    group("Used by", ins);
+  }
+
+  svg.addEventListener("mouseleave", clearSolo);
+
+  var initial = (location.hash || "").slice(1);
+  if (!byId[initial]) {
+    initial = DEFAULT_SELECTED;
+    if (!byId[initial]) {
+      var best = null, bestN = -1;
+      NODES.forEach(function (n) {
+        var c = EDGES.filter(function (e) { return e.f === n.id || e.t === n.id; }).length;
+        if (c > bestN) { bestN = c; best = n.id; }
+      });
+      initial = best;
+    }
+  }
+  select(initial);
+})();
+</script>
